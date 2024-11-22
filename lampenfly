@@ -1,0 +1,79 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Camera = workspace.CurrentCamera
+
+local flying = false
+local speed = 50
+local groundPart
+
+-- Functie om de "grond" aan te maken
+local function createGround()
+    groundPart = Instance.new("Part")
+    groundPart.Size = Vector3.new(4, 0.1, 4) -- Grootte van de grond
+    groundPart.Anchored = true -- Maak de grond vast
+    groundPart.CanCollide = true -- Zorg ervoor dat je erop kunt staan
+    groundPart.Transparency = 0.5 -- Maak de grond semi-transparant
+    groundPart.Parent = workspace
+end
+
+-- Functie om te vliegen
+local function fly()
+    flying = true
+    createGround() -- Maak de grond aan bij het vliegen
+
+    while flying do
+        wait(0.1)
+        local moveDirection = Vector3.new(0, 0, 0)
+
+        -- Beweging in de lucht
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDirection = moveDirection + (Camera.CFrame.LookVector * speed)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDirection = moveDirection - (Camera.CFrame.LookVector * speed)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDirection = moveDirection - (Camera.CFrame.RightVector * speed)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDirection = moveDirection + (Camera.CFrame.RightVector * speed)
+        end
+
+        -- Stijgen en dalen
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            HumanoidRootPart.Position = HumanoidRootPart.Position + Vector3.new(0, speed * 0.1, 0) -- Stijg omhoog
+        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            HumanoidRootPart.Position = HumanoidRootPart.Position + Vector3.new(0, -speed * 0.1, 0) -- Dalend
+        end
+
+        -- Update de positie van de "grond" part onder de speler
+        groundPart.Position = HumanoidRootPart.Position - Vector3.new(0, 2, 0) -- Plaats de grond 2 studs onder de speler
+    end
+end
+
+-- Toets om te toggelen
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.F2 then
+        flying = not flying
+        if flying then
+            fly()
+        else
+            if groundPart then
+                groundPart:Destroy()
+                groundPart = nil
+            end
+        end
+    end
+end)
+
+-- Zorg ervoor dat de grond altijd onder de speler is, ook bij respawn
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end)
+
+-- Maak de grond bij de eerste spawn
+createGround()
