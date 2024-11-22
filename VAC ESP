@@ -1,0 +1,147 @@
+-- ESP Script
+local FillColor = Color3.fromRGB(0, 0, 204)
+local DepthMode = "AlwaysOnTop"
+local FillTransparency = 0.5
+local OutlineColor = Color3.fromRGB(255, 255, 255)
+local OutlineTransparency = 0
+
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+local Storage = Instance.new("Folder")
+Storage.Name = "Highlight_Storage"
+Storage.Parent = CoreGui
+
+local connections = {}
+local playerCache = {}
+
+-- ESP Functions
+local function createDrawing(class, properties)
+    local drawing = Drawing.new(class)
+    for property, value in pairs(properties) do
+        drawing[property] = value
+    end
+    return drawing
+end
+
+local function updateHighlight(player, character)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = player.Name
+    highlight.FillColor = FillColor
+    highlight.DepthMode = DepthMode
+    highlight.FillTransparency = FillTransparency
+    highlight.OutlineColor = OutlineColor
+    highlight.OutlineTransparency = OutlineTransparency
+    highlight.Parent = Storage
+    highlight.Adornee = character
+    return highlight
+end
+
+local function checkCharacter(player)
+    local character = player.Character or player.CharacterAdded:Wait()
+    if character then
+        return character:FindFirstChild("HumanoidRootPart") ~= nil
+    end
+    return false
+end
+
+local function updateVisuals(playerData)
+    local player = playerData.player
+    local character = playerData.character
+    local drawings = playerData.drawings
+    local root = character:FindFirstChild("HumanoidRootPart")
+
+    if root then
+        local position, visible = Camera:WorldToViewportPoint(root.Position)
+        if visible then
+            local scale = 1 / (position.Z * math.tan(math.rad(Camera.FieldOfView * 0.5)) * 2) * 1000
+            local width = math.floor(4.5 * scale)
+            local height = math.floor(6 * scale)
+
+            drawings.box.Size = Vector2.new(width, height)
+            drawings.box.Position = Vector2.new(position.X - width / 2, position.Y - height / 2)
+            drawings.box.Visible = true
+
+            drawings.name.Text = "[ " .. player.Name .. " ]"
+            drawings.name.Position = Vector2.new(position.X, position.Y - height / 2 - 2)
+            drawings.name.Visible = true
+        else
+            drawings.box.Visible = false
+            drawings.name.Visible = false
+        end
+    end
+end
+
+-- Player Management
+local function managePlayer(player)
+    if player == Players.LocalPlayer then return end
+
+    local drawings = {
+        box = createDrawing("Square", {Visible = false, Color = Color3.fromRGB(255, 255, 255), Thickness = 1}),
+        name = createDrawing("Text", {Visible = false, Center = true}),
+    }
+
+    local character = player.Character or player.CharacterAdded:Wait()
+    local highlight = updateHighlight(player, character)
+
+    playerCache[player] = {player = player, character = character, drawings = drawings, highlight = highlight}
+
+    connections[player] = player.CharacterAdded:Connect(function(newCharacter)
+        highlight.Adornee = newCharacter
+    end)
+end
+
+local function removePlayer(player)
+    local playerData = playerCache[player]
+    if playerData then
+        for _, drawing in pairs(playerData.drawings) do
+            drawing:Remove()
+        end
+        playerData.highlight:Destroy()
+        playerCache[player] = nil
+
+        if connections[player] then
+            connections[player]:Disconnect()
+            connections[player] = nil
+        end
+    end
+end
+
+-- Main Loop
+RunService.RenderStepped:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if not playerCache[player] then
+            managePlayer(player)
+        end
+        if playerCache[player] then
+            updateVisuals(playerCache[player])
+        end
+    end
+end)
+
+-- Initial Player Setup
+for _, player in ipairs(Players:GetPlayers()) do
+    managePlayer(player)
+end
+
+Players.PlayerAdded:Connect(managePlayer)
+Players.PlayerRemoving:Connect(removePlayer)
+
+-- Key Binding for Toggle
+local UserInputService = game:GetService("UserInputService")
+local isESPEnabled = true
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.F1 then
+        isESPEnabled = not isESPEnabled
+        for _, playerData in pairs(playerCache) do
+            for _, drawing in pairs(playerData.drawings) do
+                drawing.Visible = isESPEnabled
+            end
+            playerData.highlight.Enabled = isESPEnabled
+        end
+        print("ESP " .. (isESPEnabled and "enabled" or "disabled"))
+    end
+end)
