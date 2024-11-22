@@ -1,0 +1,115 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local backgroundFrame = Instance.new("Frame")
+backgroundFrame.Size = UDim2.new(0, 320, 0, 180)
+backgroundFrame.Position = UDim2.new(0, 10, 0, 10)
+backgroundFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+backgroundFrame.BackgroundTransparency = 0.6
+backgroundFrame.BorderSizePixel = 0
+backgroundFrame.Parent = screenGui
+
+local borderFrame = Instance.new("Frame")
+borderFrame.Size = UDim2.new(1, 0, 1, 0)
+borderFrame.Position = UDim2.new(0, 0, 0, 0)
+borderFrame.BackgroundTransparency = 1
+borderFrame.BorderSizePixel = 2
+borderFrame.BorderColor3 = Color3.new(1, 1, 1)
+borderFrame.Parent = backgroundFrame
+
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Size = UDim2.new(1, 0, 1, 0)
+infoLabel.Position = UDim2.new(0, 0, 0, 0)
+infoLabel.BackgroundTransparency = 1
+infoLabel.TextColor3 = Color3.new(1, 1, 1)
+infoLabel.TextStrokeTransparency = 0.5
+infoLabel.Font = Enum.Font.SourceSansBold
+infoLabel.TextSize = 20
+infoLabel.TextWrapped = true
+infoLabel.TextScaled = true
+infoLabel.Parent = backgroundFrame
+
+local function updatePlayerInfo()
+    local infoList = {}
+    
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local localPosition = LocalPlayer.Character.HumanoidRootPart.Position
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetPosition = player.Character.HumanoidRootPart.Position
+                local distance = (localPosition - targetPosition).magnitude
+                table.insert(infoList, { Name = player.Name, Distance = distance, Coords = targetPosition })
+            end
+        end
+    end
+
+    table.sort(infoList, function(a, b)
+        return a.Distance < b.Distance
+    end)
+
+    local displayList = {}
+    for _, info in ipairs(infoList) do
+        table.insert(displayList, string.format("%s: %d studs, Coords: (%.2f, %.2f, %.2f)", 
+            info.Name, 
+            math.floor(info.Distance), 
+            info.Coords.X, 
+            info.Coords.Y, 
+            info.Coords.Z))
+    end
+    
+    infoLabel.Text = table.concat(displayList, "\n")
+end
+
+RunService.RenderStepped:Connect(updatePlayerInfo)
+local StarterGui = game:GetService("StarterGui")
+
+local function sendAlert(title, message)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = message,
+        Duration = 5 -- Duration in seconds
+    })
+end
+
+-- Example usage
+sendAlert("Made By lampenkop", "If u paid for this script u got scammed!!!")
+wait(1)
+local StarterGui = game:GetService("StarterGui")
+
+local function sendAlert(title, message)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = message,
+        Duration = 5 -- Duration in seconds
+    })
+end
+
+-- Example usage
+sendAlert("Made By lampenkop", "If u paid for this script u got scammed!!!")
+local StarterGui = game:GetService("StarterGui")
+
+local function sendAlert(title, message)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = message,
+        Duration = 5 -- Duration in seconds
+    })
+end
+
+-- Example usage
+sendAlert("Made By lampenkop", "If u paid for this script u got scammed!!!")
+wait(1)
+local StarterGui = game:GetService("StarterGui")
+
+local function sendAlert(title, message)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = message,
+        Duration = 5 -- Duration in seconds
+    })
+end
